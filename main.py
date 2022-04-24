@@ -1,13 +1,12 @@
 import cv2
 import numpy as np
 from enum import Enum
-
-# TODO: Minimize turning angles
-# TODO: Alternative fitness function
+from math import sqrt
 
 BLACK = False
 WHITE = True
 LIMIT = 16  # Maximum number of solutions for each step
+EVALUATION_FUNCTION = "matching_pixels"  # turning_angle | matching_pixels | both
 
 
 class Operation(Enum):
@@ -78,20 +77,38 @@ def visited_before(i, j, history):
     return False
 
 
-def find_fitness(current_fitness, target, i, j):
+def turning_angle(prev_op, next_op):
+    if prev_op is None:
+        return 0
+    i1, j1 = operations[prev_op](1, 1)
+    i2, j2 = operations[next_op](1, 1)
+    closeness = -sqrt(((i1 - i2) ** 2) + ((j1 - j2) ** 2))  # range(-2 , 0) -> Higher is better
+    return (closeness + 2) / 2  # Scaled into (0, 1)
+
+
+def matching_pixels(current_fitness, target, i, j, pixel_count):
     if target[i, j] == BLACK:
-        return current_fitness + 1
+        return (current_fitness + 1) / pixel_count  # TODO
     elif current_fitness > 0:
-        return current_fitness - 1
+        return (current_fitness - 1) / pixel_count
     else:
         return 0
 
 
-def generate_solutions(solution, possible_solutions, target, last_row, last_col):
+def evaluate(selected_function, current_fitness, target, i, j, pixel_count, prev_op, next_op):
+    if selected_function == "matching_pixels":
+        return matching_pixels(current_fitness, target, i, j, pixel_count)
+    elif selected_function == "turning_angle":
+        return turning_angle(prev_op, next_op)
+    return matching_pixels(current_fitness, target, i, j, pixel_count) + turning_angle(prev_op, next_op)
+
+
+def generate_solutions(solution, possible_solutions, target, last_row, last_col, pixel_count):
     for op_id in range(8):
         i, j = operations[op_id](solution.i, solution.j)
         if can_move(i, j, last_row, last_col) and not visited_before(i, j, solution.history):
-            fitness = find_fitness(solution.fitness, target, i, j)
+            last_move = solution.history[-1] if len(solution.history) > 0 else None
+            fitness = evaluate(EVALUATION_FUNCTION, solution.fitness, target, i, j, pixel_count, last_move, op_id)
             history = solution.history.copy()
             history.append(op_id)
 
@@ -109,7 +126,7 @@ def select_new_solutions(possible_solutions, current_solutions):
             current_solutions.append(solution)
             min_fitness_index = current_solutions.index(min(current_solutions, key=lambda x: x.fitness))
             has_change = True
-        elif solution.fitness > current_solutions[min_fitness_index].fitness:  # TODO: Maybe greater or equal
+        elif solution.fitness > current_solutions[min_fitness_index].fitness:
             current_solutions[min_fitness_index] = solution
             min_fitness_index = current_solutions.index(min(current_solutions, key=lambda x: x.fitness))
             has_change = True
@@ -119,6 +136,7 @@ def select_new_solutions(possible_solutions, current_solutions):
 
 def local_beam_search(target):
     last_row, last_col = get_bounds(target)
+    pixel_count = (last_row + 1) * (last_col + 1)
     solution = Solution(last_row, 0, 0.0)
     current_solutions = [solution]
     more_solutions = True
@@ -127,7 +145,7 @@ def local_beam_search(target):
         possible_solutions = []
 
         for solution in current_solutions:
-            generate_solutions(solution, possible_solutions, target, last_row, last_col)
+            generate_solutions(solution, possible_solutions, target, last_row, last_col, pixel_count)
 
         more_solutions = select_new_solutions(possible_solutions, current_solutions)
 
