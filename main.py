@@ -8,8 +8,6 @@ from random import random, shuffle
 # CONSTANTS
 BLACK = False
 WHITE = True
-MATCHING_PIXELS_WEIGHT = 0.9  # Takes effect if evaluation_function == "matching_pixels_and_turning_angle"
-TURNING_ANGLE_WEIGHT = 0.1  # Takes effect if evaluation_function == "matching_pixels_and_turning_angle"
 
 OPERATIONS = [
     lambda i, j: (i - 1, j),  # UP
@@ -35,25 +33,27 @@ class Operation(Enum):
 
 
 class Solution:
-    def __init__(self, i, j, matching_pixel_fitness, turning_angle_fitness, evaluation_function, history=[]):
+    def __init__(self, i, j, matching_pixel_fitness, turning_angle_fitness, evaluation_function, weights={}, history=[]):
         self.i = i
         self.j = j
         self.mp = matching_pixel_fitness
         self.ta = turning_angle_fitness
+        self.weights = weights
         self.evaluation_function = evaluation_function
         self.history = history
 
     def get_fitness(self):
         if self.evaluation_function == "matching_pixels":
             return self.mp
-        return self.mp * MATCHING_PIXELS_WEIGHT + self.ta * TURNING_ANGLE_WEIGHT
+        return self.mp * self.weights["matching_pixels"] + self.ta * self.weights["turning_angle"]
 
 
 class Report:
-    def __init__(self, max_solutions, evaluation_function, sa_max_iterations, target):
+    def __init__(self, max_solutions, evaluation_function, sa_max_iterations, weights, target):
         self.max_solutions = max_solutions
         self.evaluation_function = evaluation_function
         self.sa_max_iterations = sa_max_iterations
+        self.weights = weights
         self.target = target
         self.generation_count = 0
         self.best_solutions_for_each_generation = []
@@ -141,7 +141,7 @@ def should_select(fitness, iteration_number, sa_max_iterations):
     return probability > random()
 
 
-def generate_solutions(solution, possible_solutions, target, last_row, last_col, black_pixels, evaluation_function):
+def generate_solutions(solution, possible_solutions, target, last_row, last_col, black_pixels, evaluation_function, weights):
     op_ids = list(range(8))
     shuffle(op_ids)
 
@@ -152,7 +152,7 @@ def generate_solutions(solution, possible_solutions, target, last_row, last_col,
             history = solution.history.copy()
             history.append(op_id)
 
-            new_solution = Solution(i, j, mp, ta, evaluation_function, history)
+            new_solution = Solution(i, j, mp, ta, evaluation_function, weights, history)
             possible_solutions.append(new_solution)
 
 
@@ -183,11 +183,11 @@ def select_new_solutions(possible_solutions, current_solutions, iteration_number
     return has_change
 
 
-def local_beam_search(target, max_solutions, evaluation_function, sa_max_iterations):
-    report = Report(max_solutions, evaluation_function, sa_max_iterations, target)
+def local_beam_search(target, max_solutions, evaluation_function, sa_max_iterations, weights):
+    report = Report(max_solutions, evaluation_function, sa_max_iterations, weights, target)
     last_row, last_col = get_bounds(target)
     black_pixels = find_black_pixel_count(target)
-    solution = Solution(last_row, 0, 0.0, 1.0, evaluation_function)
+    solution = Solution(last_row, 0, 0.0, 1.0, evaluation_function, weights)
     current_solutions = [solution]
     more_solutions = True
     iteration_number = 0
@@ -196,7 +196,7 @@ def local_beam_search(target, max_solutions, evaluation_function, sa_max_iterati
         possible_solutions = []
 
         for solution in current_solutions:
-            generate_solutions(solution, possible_solutions, target, last_row, last_col, black_pixels, evaluation_function)
+            generate_solutions(solution, possible_solutions, target, last_row, last_col, black_pixels, evaluation_function, weights)
 
         more_solutions = select_new_solutions(possible_solutions, current_solutions, iteration_number, max_solutions, sa_max_iterations)
         best_solution_of_generation = max(current_solutions, key=lambda x: x.get_fitness())
@@ -243,6 +243,9 @@ def print_report(report, show_images=True, show_only_result=False):
     print(f"* Evaluation Function = {report.evaluation_function}")
     print(f"* Max Solutions in Memory | Population Size = {report.max_solutions}")
     print(f"* Max Iterations for Simulated Annealing = {report.sa_max_iterations}")
+    if report.evaluation_function == "matching_pixels_and_turning_angle":
+        print(f"* Matching Pixels Weight = {report.weights['matching_pixels']}")
+        print(f"* Turning Angles Weight = {report.weights['turning_angle']}")
     print("")
     print("Results:")
     print(f"* Generation Count: {report.generation_count}")
@@ -264,18 +267,19 @@ def print_report(report, show_images=True, show_only_result=False):
                 show_solution(solution, title, get_bounds(report.target))
 
 
-def run_all(evaluation_functions_list, max_solutions_list, sa_max_iterations_list, images_count):
+def run_all(evaluation_functions_list, max_solutions_list, sa_max_iterations_list, weights_list, images_count):
     best_solutions = []
     reports = []
 
     for evaluation_function in evaluation_functions_list:
         for max_solutions in max_solutions_list:
             for sa_max_iterations in sa_max_iterations_list:
-                for image_number in range(images_count):
-                    target_arr = read_image(f"images/{image_number}.png")
-                    best_solution, report = local_beam_search(target_arr, max_solutions, evaluation_function, sa_max_iterations)
-                    best_solutions.append(best_solution)
-                    reports.append(report)
+                for weights in weights_list:
+                    for image_number in range(images_count):
+                        target_arr = read_image(f"images/{image_number}.png")
+                        best_solution, report = local_beam_search(target_arr, max_solutions, evaluation_function, sa_max_iterations, weights)
+                        best_solutions.append(best_solution)
+                        reports.append(report)
 
     return best_solutions, reports
 
@@ -351,16 +355,39 @@ def plot_effect_of_sa_max_iterations(reports, images_count):
     plt.show()
 
 
+def plot_effect_of_weights(reports, images_count):
+    groups = {}
+
+    for report in reports:
+        item = report.best_solutions_for_each_generation[-1].get_fitness()
+        key = f"mp:{report.weights['matching_pixels']}, ta:{report.weights['turning_angle']}"
+        if key not in groups:
+            groups[key] = [item]
+        else:
+            groups[key].append(item)
+
+    images_range = list(range(images_count))
+
+    for key, value in groups.items():
+        plt.plot(images_range, value, label=key)
+
+    plt.xlabel("Different Images")
+    plt.ylabel("Fitness of Best Solution")
+    plt.legend()
+    plt.show()
+
+
 if __name__ == "__main__":
     _evaluation_functions_list = ["matching_pixels_and_turning_angle"]
     _max_solutions_list = [128]
-    _sa_max_iterations_list = [128]
+    _sa_max_iterations_list = [0, 16, 32, 64, 128, 256]
+    _weights_list = [{"matching_pixels": 0.75, "turning_angle": 0.25}]
     _images_count = 10
 
-    _best_solutions, _reports = run_all(_evaluation_functions_list, _max_solutions_list, _sa_max_iterations_list, _images_count)
+    _best_solutions, _reports = run_all(_evaluation_functions_list, _max_solutions_list, _sa_max_iterations_list, _weights_list, _images_count)
 
     for _report in _reports:
-        print_report(_report, show_images=True)
+        print_report(_report, show_images=False)
 
     if len(_evaluation_functions_list) == 2:
         plot_effect_of_evaluation_function(_reports, _evaluation_functions_list)
@@ -368,3 +395,5 @@ if __name__ == "__main__":
         plot_effect_of_max_solutions(_reports, _images_count)
     elif len(_sa_max_iterations_list) > 1:
         plot_effect_of_sa_max_iterations(_reports, _images_count)
+    elif _evaluation_functions_list[0] == "matching_pixels_and_turning_angle":
+        plot_effect_of_weights(_reports, _images_count)
