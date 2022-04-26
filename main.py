@@ -8,8 +8,8 @@ from random import random, shuffle
 # CONSTANTS
 BLACK = False
 WHITE = True
-MATCHING_PIXELS_WEIGHT = 0.75  # Takes effect if evaluation_function == "matching_pixels_and_turning_angle"
-TURNING_ANGLE_WEIGHT = 0.25  # Takes effect if evaluation_function == "matching_pixels_and_turning_angle"
+MATCHING_PIXELS_WEIGHT = 0.9  # Takes effect if evaluation_function == "matching_pixels_and_turning_angle"
+TURNING_ANGLE_WEIGHT = 0.1  # Takes effect if evaluation_function == "matching_pixels_and_turning_angle"
 
 OPERATIONS = [
     lambda i, j: (i - 1, j),  # UP
@@ -38,11 +38,14 @@ class Solution:
     def __init__(self, i, j, matching_pixel_fitness, turning_angle_fitness, evaluation_function, history=[]):
         self.i = i
         self.j = j
-        self.mp = matching_pixel_fitness if evaluation_function != 'turning_angle' else 0
-        self.ta = turning_angle_fitness if evaluation_function != 'matching_pixels' else 0
+        self.mp = matching_pixel_fitness
+        self.ta = turning_angle_fitness
+        self.evaluation_function = evaluation_function
         self.history = history
 
     def get_fitness(self):
+        if self.evaluation_function == "matching_pixels":
+            return self.mp
         return self.mp * MATCHING_PIXELS_WEIGHT + self.ta * TURNING_ANGLE_WEIGHT
 
 
@@ -184,8 +187,7 @@ def local_beam_search(target, max_solutions, evaluation_function, sa_max_iterati
     report = Report(max_solutions, evaluation_function, sa_max_iterations, target)
     last_row, last_col = get_bounds(target)
     black_pixels = find_black_pixel_count(target)
-    initial_mp = matching_pixels(0, target, last_row, 0, black_pixels)
-    solution = Solution(last_row, 0, initial_mp, 1.0, evaluation_function)
+    solution = Solution(last_row, 0, 0.0, 1.0, evaluation_function)
     current_solutions = [solution]
     more_solutions = True
     iteration_number = 0
@@ -235,7 +237,7 @@ def show_solution(solution, title, bounds):
     show_image(binary_to_rgb(arr), title)
 
 
-def print_report(report, show_images=True):
+def print_report(report, show_images=True, show_only_result=False):
     print("---------------- REPORT ---------------")
     print("Hyper Parameters:")
     print(f"* Evaluation Function = {report.evaluation_function}")
@@ -244,7 +246,7 @@ def print_report(report, show_images=True):
     print("")
     print("Results:")
     print(f"* Generation Count: {report.generation_count}")
-    print(f"* Fitness of Best Solution: {report.best_solutions_for_each_generation[-1].get_fitness()}")
+    print(f"* Fitness of Best Solution: {round(report.best_solutions_for_each_generation[-1].get_fitness(), 3)}")
     print("---------------------------------------")
     print("")
     print("")
@@ -252,9 +254,14 @@ def print_report(report, show_images=True):
     if show_images:
         show_image(binary_to_rgb(report.target), "Target", wait=False)
 
-        for solution in report.best_solutions_for_each_generation:
-            title = "Best Solution (Each Step)"
+        if show_only_result:
+            solution = report.best_solutions_for_each_generation[-1]
+            title = "Best Solution"
             show_solution(solution, title, get_bounds(report.target))
+        else:
+            for solution in report.best_solutions_for_each_generation:
+                title = "Best Solution (Each Step)"
+                show_solution(solution, title, get_bounds(report.target))
 
 
 def run_all(evaluation_functions_list, max_solutions_list, sa_max_iterations_list, images_count):
