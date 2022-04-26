@@ -5,8 +5,6 @@ from enum import Enum
 from math import sqrt
 from random import random, shuffle
 
-# TODO Wrong evaluation calculation
-
 # CONSTANTS
 BLACK = False
 WHITE = True
