@@ -244,7 +244,7 @@ def print_report(report, show_images=True):
     print("")
     print("Results:")
     print(f"* Generation Count: {report.generation_count}")
-    print(f"* Fitness of Best Solution: {report.best_solutions_for_each_generation[-1]}")
+    print(f"* Fitness of Best Solution: {report.best_solutions_for_each_generation[-1].get_fitness()}")
     print("---------------------------------------")
     print("")
     print("")
