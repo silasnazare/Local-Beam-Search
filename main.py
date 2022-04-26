@@ -8,7 +8,6 @@ from random import random, shuffle
 # CONSTANTS
 BLACK = False
 WHITE = True
-IMAGE_PATH = "images/10.png"
 MATCHING_PIXELS_WEIGHT = 0.75  # Takes effect if evaluation_function == "matching_pixels_and_turning_angle"
 TURNING_ANGLE_WEIGHT = 0.25  # Takes effect if evaluation_function == "matching_pixels_and_turning_angle"
 
