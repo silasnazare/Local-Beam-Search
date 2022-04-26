@@ -251,11 +251,10 @@ def print_report(report, show_images=True):
 
     if show_images:
         show_image(binary_to_rgb(report.target), "Target", wait=False)
-        i = 1
+
         for solution in report.best_solutions_for_each_generation:
-            title = f"Best Solution (Each Step)"
+            title = "Best Solution (Each Step)"
             show_solution(solution, title, get_bounds(report.target))
-            i += 1
 
 
 def run_all(evaluation_functions_list, max_solutions_list, sa_max_iterations_list, images_count):
