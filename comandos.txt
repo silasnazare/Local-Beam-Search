@@ -1,0 +1,14 @@
+-setState and -printState
+python3 play_puzzle.py -setState "325 678 b14" -printState -prettyPrintState
+
+-randomizeState
+python3 play_puzzle.py -randomizeState 50 -printState -prettyPrintState
+
+-move
+python3 play_puzzle.py -setState "b12 345 678" -printState -prettyPrintState
+python3 play_puzzle.py -move "right" -printState -prettyPrintState
+python3 play_puzzle.py -setState "b12 345 678" -move "up"
+
+-solveBeam
+python3 play_puzzle.py -setState "125 348 67b" -solveBeam 10 -prettyPrintSolution
+python3 play_puzzle.py -randomizeState 20 -solveBeam 10 -maxNodes 5000

@@ -30,7 +30,7 @@ if __name__=="__main__":
 		puzzle.randomize_state(args.randomizeState)
 
 	if args.printState:
-		print("Current puzzle state:")
+		print("Estado atual do quebra-cabeça:")
 		puzzle.print_state()
 
 	if args.move:
@@ -99,7 +99,7 @@ if __name__=="__main__":
 							puzzle.local_beam(k = k)
 
 					elif argument == "printState":
-						print("Current puzzle state:")
+						print("Estado atual do quebra-cabeça:")
 						puzzle.print_state()
 
 					elif argument == "prettyPrintState":

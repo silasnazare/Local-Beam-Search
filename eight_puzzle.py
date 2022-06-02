@@ -33,18 +33,18 @@ class Puzzle():
         
         # Encontre movimentos disponíveis
         if blank_row == 0:
-            available_actions.append("down")
+            available_actions.append("baixo")
         elif blank_row == 1:
-            available_actions.extend(("up", "down"))
+            available_actions.extend(("cima", "baixo"))
         elif blank_row == 2:
-            available_actions.append("up")
+            available_actions.append("cima")
             
         if blank_column == 0:
-            available_actions.append("right")
+            available_actions.append("direita")
         elif blank_column == 1:
-            available_actions.extend(("left", "right"))
+            available_actions.extend(("esquerda", "direita"))
         elif blank_column == 2:
-            available_actions.append("left")
+            available_actions.append("esquerda")
             
         # Embaralhe aleatoriamente as ações para remover o viés de ordenação
         random.shuffle(available_actions)
@@ -56,7 +56,7 @@ class Puzzle():
 
         # Verifique o tamanho correto da String
         if len(state_string) != 11:
-            print("String Length is not correct!")
+            print("O comprimento da String não está correto!")
 
         # Acompanhe os elementos que foram adicionados ao quadro
         added_elements = []
@@ -66,13 +66,13 @@ class Puzzle():
             for col_index, element in enumerate(row):
                 # Verifique se não há caracteres inválidos na String
                 if element not in ['b', '1', '2', '3', '4', '5', '6', '7', '8']:
-                    print("Invalid character in state:", element)
+                    print("Caractere inválido no estado:", element)
                     break
                 else:
                     if element == "b":
                         # Verifique se o espaço em branco foi adicionado duas vezes
                         if element in added_elements:
-                            print("The blank was added twice")
+                            print("O branco foi adicionado duas vezes")
                             break
 
                         # Defina a peça em branco para um 0 no quebra-cabeça
@@ -82,7 +82,7 @@ class Puzzle():
                     else:
                         # Verifique se o bloco já foi adicionado ao tabuleiro
                         if int(element) in added_elements:
-                            print("Tile {} has been added twice".format(element))
+                            print("O bloco {} foi adicionado duas vezes".format(element))
                             break
 
                         else:
@@ -114,24 +114,24 @@ class Puzzle():
 
         # Verifique se a ação é permitida, dado o estado da placa
         if action not in available_actions:
-            print("Move not allowed\nAllowed moves:", available_actions)
+            print("Movimento não permitido\nMovimentos permitidos:", available_actions)
             return False
 
         # Execute o movimento como uma série de instruções if
         else:
-            if action == "down":
+            if action == "baixo":
                 tile_to_move = state[blank_row + 1][blank_column]
                 new_state[blank_row][blank_column] = tile_to_move
                 new_state[blank_row + 1][blank_column] = 0
-            elif action == "up":
+            elif action == "cima":
                 tile_to_move = state[blank_row - 1][blank_column]
                 new_state[blank_row][blank_column] = tile_to_move
                 new_state[blank_row - 1][blank_column] = 0
-            elif action == "right":
+            elif action == "direita":
                 tile_to_move = state[blank_row][blank_column + 1]
                 new_state[blank_row][blank_column] = tile_to_move
                 new_state[blank_row][blank_column + 1] = 0
-            elif action == "left":
+            elif action == "esquerda":
                 tile_to_move = state[blank_row][blank_column - 1]
                 new_state[blank_row][blank_column] = tile_to_move
                 new_state[blank_row][blank_column -1] = 0
@@ -155,7 +155,7 @@ class Puzzle():
         print("".join(str_state[0:3]), "".join(str_state[3:6]), "".join(str_state[6:9]))
 
     def pretty_print_state(self, state):
-        print("\nCurrent State")
+        print("\nEstado atual")
         for row in (state):
             print("-" * 13)
             print("| {} | {} | {} |".format(*row))
@@ -166,10 +166,10 @@ class Puzzle():
             # O caminho da solução está na ordem inversa
             for depth, state in enumerate(solution_path[::-1]):
                 if depth == 0:
-                    print("\nStarting State")
+                    print("\nEstado inicial")
 
                 elif depth == (len(solution_path) - 2):
-                    print("\nGOAL!!!!!!!!!")
+                    print("\nMETA!!!!!!!!!")
                     for row_num, row in enumerate(state[0]):
                         print("-" * 13)
                         print("| {} | {} | {} |".format(*row))
@@ -177,12 +177,12 @@ class Puzzle():
                     print("\n")
                     break
                 else:
-                    print("\nDepth:", depth)
+                    print("\nProfundidade:", depth)
                 for row_num, row in enumerate(state[0]):
                     print("-" * 13)
                     print("| {} | {} | {} |".format(*row))
         except:
-            print("No Solution Found")
+            print("Nenhuma solução encontrada")
             
         
     def calculate_h1_heuristic(self, state):
@@ -255,11 +255,11 @@ class Puzzle():
 
         # Defina o primeiro elemento em ambos os dicionários para o estado inicial
         # Este é o único nó que estará em ambos os dicionários
-        expanded_nodes[node_index] = {"state": current_state, "parent": "root", "action": "start",
-                                   "total_cost": self.calculate_total_cost(0, current_state, heuristic), "depth": 0}
+        expanded_nodes[node_index] = {"estado": current_state, "pai": "raiz", "ação": "início",
+                                   "total_cost": self.calculate_total_cost(0, current_state, heuristic), "profundidade": 0}
         
-        frontier_nodes[node_index] = {"state": current_state, "parent": "root", "action": "start",
-                                   "total_cost": self.calculate_total_cost(0, current_state, heuristic), "depth": 0}
+        frontier_nodes[node_index] = {"estado": current_state, "pai": "raiz", "ação": "início",
+                                   "total_cost": self.calculate_total_cost(0, current_state, heuristic), "profundidade": 0}
         
 
         failure = False
@@ -273,8 +273,8 @@ class Puzzle():
             # Obtenha a profundidade de estado atual para uso no cálculo de custo total
             current_depth = 0
             for node_num, node in expanded_nodes.items():
-                if node["state"] == current_state:
-                    current_depth = node["depth"]
+                if node["estado"] == current_state:
+                    current_depth = node["profundidade"]
 
             # Encontre as ações disponíveis correspondentes ao estado atual
             available_actions, _, _ = self.get_available_actions(current_state)
@@ -286,7 +286,7 @@ class Puzzle():
                 # Se o máximo de nós for atingido, saia do loop
                 if node_index >= max_nodes:
                     failure = True
-                    print("No Solution Found in first {} nodes generated".format(max_nodes))
+                    print("Nenhuma solução encontrada nos primeiros {} nós gerados".format(max_nodes))
                     self.num_nodes_generated = max_nodes
                     break
 
@@ -296,15 +296,15 @@ class Puzzle():
 
                 # Verifique se o novo estado já foi expandido
                 for expanded_node in expanded_nodes.values():
-                    if expanded_node["state"] == new_state:
-                        if expanded_node["parent"] == new_state_parent:
+                    if expanded_node["estado"] == new_state:
+                        if expanded_node["pai"] == new_state_parent:
                             repeat = True
 
                 # Verifique se o novo estado e o pai estão na fronteira
                 # O mesmo estado pode ser adicionado duas vezes à fronteira se o estado pai for diferente
                 for frontier_node in frontier_nodes.values():
-                    if frontier_node["state"] == new_state:
-                        if frontier_node["parent"] == new_state_parent:
+                    if frontier_node["estado"] == new_state:
+                        if frontier_node["pai"] == new_state_parent:
                             repeat = True
 
                 # Se o novo estado já foi expandido ou está na fronteira, continue com a próxima ação
@@ -323,7 +323,7 @@ class Puzzle():
                     all_frontier_nodes.append((node_index, new_state_cost))
 
                     # Adicione o nó à fronteira
-                    frontier_nodes[node_index] = {"state": new_state, "parent": new_state_parent, "action": action, "total_cost": new_state_cost, "depth": current_depth + 1}
+                    frontier_nodes[node_index] = {"estado": new_state, "pai": new_state_parent, "ação": action, "total_cost": new_state_cost, "profundidade": current_depth + 1}
 
             # Classifique todos os nós na fronteira pelo custo total
             all_frontier_nodes = sorted(all_frontier_nodes, key=lambda x: x[1])
@@ -334,7 +334,7 @@ class Puzzle():
                 # Após selecionar o nó para expansão, remova-o da fila
                 best_node = all_frontier_nodes.pop(0)
                 best_node_index = best_node[0]
-                best_node_state = frontier_nodes[best_node_index]["state"]
+                best_node_state = frontier_nodes[best_node_index]["estado"]
                 current_state = best_node_state
 
                 # Mova o nó da fronteira para os nós expandidos
@@ -368,7 +368,7 @@ class Puzzle():
         # Índice para todos os dicionários de nós
         node_index = 0
 
-        all_nodes[node_index] = {"state": starting_state, "parent": "root", "action": "start"}
+        all_nodes[node_index] = {"estado": starting_state, "pai": "raiz", "ação": "início"}
 
         # Pontuação para o estado inicial
         starting_score = self.calculate_h1_heuristic(starting_state) + self.calculate_h2_heuristic(starting_state)
@@ -384,7 +384,7 @@ class Puzzle():
             # Verifique se o número de nós gerados excede o máximo de nós
             if node_index >= max_nodes:
                 failure = True
-                print("No Solution Found in first {} generated nodes".format(max_nodes))
+                print("Nenhuma solução encontrada nos primeiros {} nós gerados".format(max_nodes))
                 break
               
             # Os nós sucessores são todos os nós que podem ser alcançados de todos os estados disponíveis. A cada iteração, isso é redefinido para uma lista vazia
@@ -396,7 +396,7 @@ class Puzzle():
                 repeat = False
 
                 # Encontre o estado atual
-                current_state = all_nodes[node[0]]["state"]
+                current_state = all_nodes[node[0]]["estado"]
 
                 # Encontre as ações correspondentes ao estado
                 available_actions, _, _ = self.get_available_actions(current_state)
@@ -408,15 +408,15 @@ class Puzzle():
 
                     # Verifique se o estado já foi visto
                     for node_num, node in all_nodes.items():
-                        if node["state"] == successor_state:
-                            if node["parent"] == current_state:
+                        if node["estado"] == successor_state:
+                            if node["pai"] == current_state:
                                 repeat = True
 
                     # Verifique se o estado é o estado da meta
                     # Se o melhor estado for o objetivo, pare a iteração
                     if successor_state == self.goal_state:	
-                        all_nodes[node_index] = {"state": successor_state, 
-                                "parent": current_state, "action": action}
+                        all_nodes[node_index] = {"estado": successor_state, 
+                                "pai": current_state, "ação": action}
                         self.expanded_nodes = all_nodes
                         self.num_nodes_generated = node_index + 1
                         self.success(all_nodes, node_index, print_solution)
@@ -428,7 +428,7 @@ class Puzzle():
                         # Calcular a pontuação do estado
                         score = (self.calculate_h1_heuristic(successor_state) + self.calculate_h2_heuristic(successor_state))
                         # Adicione o estado à lista de nós
-                        all_nodes[node_index] = {"state": successor_state, "parent": current_state, "action": action}
+                        all_nodes[node_index] = {"estado": successor_state, "pai": current_state, "ação": action}
                         # Adicione o estado à successor_nodes list
                         successor_nodes.append((node_index, score))
                     else:
@@ -444,18 +444,18 @@ class Puzzle():
             if success == True:
             	break  
                 
-def success(self, node_dict, num_nodes_generated, print_solution=True):
+    def success(self, node_dict, num_nodes_generated, print_solution=True):
         # Depois que a solução for encontrada, imprime o caminho da solução e o comprimento do caminho da solução
         if len(node_dict) >= 1:
 
             # Encontre o nó final
             for node_num, node in node_dict.items():
-                if node["state"] == self.goal_state:
+                if node["estado"] == self.goal_state:
                     final_node = node_dict[node_num]
                     break
 
             # Gere o caminho da solução do nó final para o nó inicial
-            solution_path = self.generate_solution_path(final_node, node_dict, path=[([[0, 1, 2], [3, 4, 5], [6, 7, 8]], "goal")])
+            solution_path = self.generate_solution_path(final_node, node_dict, path=[([[0, 1, 2], [3, 4, 5], [6, 7, 8]], "meta")])
             solution_length = len(solution_path) - 2
 
         else:
@@ -466,29 +466,29 @@ def success(self, node_dict, num_nodes_generated, print_solution=True):
 
         if print_solution:
             # Exibe o comprimento da solução e o caminho da solução
-            print("Solution found!")
-            print("Solution Length: ", solution_length)
+            print("Solução encontrada!")
+            print("Tamanho da solução: ", solution_length)
 
             # O caminho da solução vai do nó final ao nó inicial. Para exibir a sequência de ações, inverta o caminho da solução
-            print("Solution Path", list(map(lambda x: x[1], solution_path[::-1])))
-            print("Total nodes generated:", num_nodes_generated)
+            print("Caminho da solução", list(map(lambda x: x[1], solution_path[::-1])))
+            print("Total de nós gerados:", num_nodes_generated)
         
-def generate_solution_path(self, node, node_dict, path):
+    def generate_solution_path(self, node, node_dict, path):
         # Retorna o caminho da solução para exibição do estado final (objetivo) para o estado inicial
         # Se o nó for a raiz, retorne o caminho
-        if node["parent"] == "root":
+        if node["pai"] == "raiz":
             # Se a raiz for encontrada, adicione o nó e retorne
-            path.append((node["state"], node["action"]))
+            path.append((node["estado"], node["ação"]))
             return path
 
         else:
             # Se o nó não for a raiz, adicione o estado e a ação ao caminho da solução
-            state = node["state"]
-            parent_state = node["parent"]
-            action = node["action"]
+            state = node["estado"]
+            parent_state = node["pai"]
+            action = node["ação"]
             path.append((state, action))
 
             # Find the parent of the node and recurse
             for node_num, expanded_node in node_dict.items():
-                if expanded_node["state"] == parent_state:
+                if expanded_node["estado"] == parent_state:
                     return self.generate_solution_path(expanded_node, node_dict, path)
